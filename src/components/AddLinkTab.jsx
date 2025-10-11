@@ -95,6 +95,41 @@ const AddLinkTab = () => {
     setShowTagDropdown(value.length > 0);
   };
 
+  const handleTagPaste = (e) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    const pastedTags = pastedText.split(',').map(t => t.trim()).filter(t => t);
+    
+    // Find available tags from the pasted list
+    const availableTags = pastedTags.filter(tag => 
+      tags.some(availableTag => availableTag.Name.toLowerCase() === tag.toLowerCase())
+    );
+    
+    // Find tags that don't exist
+    const unavailableTags = pastedTags.filter(tag => 
+      !tags.some(availableTag => availableTag.Name.toLowerCase() === tag.toLowerCase())
+    );
+    
+    // Add available tags to selected tags (avoid duplicates)
+    const newSelectedTags = [...new Set([...selectedTags, ...availableTags])];
+    setSelectedTags(newSelectedTags);
+    
+    // Show feedback about which tags were found/not found
+    if (availableTags.length > 0) {
+      setSuccess(`✅ Added ${availableTags.length} tag(s): ${availableTags.join(', ')}`);
+      setTimeout(() => setSuccess(''), 3000);
+    }
+    
+    if (unavailableTags.length > 0) {
+      setError(`❌ ${unavailableTags.length} tag(s) not found: ${unavailableTags.join(', ')}`);
+      setTimeout(() => setError(''), 5000);
+    }
+    
+    // Clear the search input
+    setTagSearch('');
+    setShowTagDropdown(false);
+  };
+
   const filteredTags = tags.filter(tag => 
     tag.Name.toLowerCase().includes(tagSearch.toLowerCase()) &&
     !selectedTags.includes(tag.Name)
@@ -196,8 +231,9 @@ const AddLinkTab = () => {
               value={tagSearch}
               onChange={handleTagSearchChange}
               onKeyPress={handleKeyPress}
+              onPaste={handleTagPaste}
               onFocus={() => setShowTagDropdown(tagSearch.length > 0)}
-              placeholder="Type to search tags..."
+              placeholder="Type to search tags or paste comma-separated tags (e.g., 32,28,949)..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             
