@@ -287,6 +287,13 @@ const AddLinkTab = () => {
           )}
         </div>
 
+        {loading && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+            Saving bookmark...
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             {error}

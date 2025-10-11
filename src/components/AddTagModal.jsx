@@ -6,6 +6,7 @@ const AddTagModal = ({ isOpen, onClose, onSuccess }) => {
   const [tags, setTags] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   React.useEffect(() => {
     if (tagInput.trim()) {
@@ -29,31 +30,25 @@ const AddTagModal = ({ isOpen, onClose, onSuccess }) => {
 
     setError('');
     setSuccess('');
+    setLoading(true);
     
-    let successCount = 0;
-    let errorCount = 0;
-    const errors = [];
-
-    for (const tag of tags) {
-      try {
-        await api.createTag(tag);
-        successCount++;
-      } catch (e) {
-        errorCount++;
-        errors.push(`${tag}: ${e.message}`);
+    try {
+      const result = await api.createTagsBatch(tags);
+      
+      setLoading(false);
+      
+      if (result.success) {
+        setSuccess(`✅ ${result.created} tag(s) added successfully (${result.requested} requested)`);
+        setTimeout(() => {
+          onSuccess();
+          handleClose();
+        }, 1000);
+      } else {
+        setError('❌ Failed to create tags');
       }
-    }
-
-    if (successCount > 0) {
-      setSuccess(`✅ ${successCount} tag(s) added successfully`);
-      setTimeout(() => {
-        onSuccess();
-        handleClose();
-      }, 1000);
-    }
-    
-    if (errorCount > 0) {
-      setError(`❌ ${errorCount} tag(s) failed:\n${errors.join('\n')}`);
+    } catch (e) {
+      setLoading(false);
+      setError(`❌ Failed to create tags: ${e.message}`);
     }
   };
 
@@ -62,6 +57,7 @@ const AddTagModal = ({ isOpen, onClose, onSuccess }) => {
     setTags([]);
     setError('');
     setSuccess('');
+    setLoading(false);
     onClose();
   };
 
@@ -118,6 +114,13 @@ const AddTagModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           )}
 
+          {loading && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm flex items-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+              Saving tags...
+            </div>
+          )}
+
           {success && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
               {success}
@@ -127,13 +130,15 @@ const AddTagModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="flex gap-3">
             <button
               onClick={handleSave}
-              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              disabled={loading}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Tags
+              {loading ? 'Saving...' : 'Save Tags'}
             </button>
             <button
               onClick={handleClose}
-              className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+              disabled={loading}
+              className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

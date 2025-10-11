@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'https://personal-blog-backend-w7kn.vercel.app/';
+const API_BASE = 'http://localhost:8000/';
 const DEFAULT_TIMEOUT = 15000;
 
 const apiClient = axios.create({
@@ -23,6 +23,11 @@ export const api = {
 
   createTag: async (name) => {
     const response = await apiClient.post('/api/tags', { name });
+    return response.data;
+  },
+
+  createTagsBatch: async (tags) => {
+    const response = await apiClient.post('/api/tags/batch', { tags });
     return response.data;
   },
 
