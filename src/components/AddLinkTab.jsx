@@ -19,7 +19,19 @@ const AddLinkTab = () => {
 
   useEffect(() => {
     loadTags();
+    checkBackendHealth();
   }, []);
+
+  const checkBackendHealth = async () => {
+    try {
+      await api.health();
+      console.log('Backend is healthy');
+    } catch (e) {
+      console.warn('Backend health check failed:', e.message);
+      setError('Warning: Backend connection issues detected. Some features may not work properly.');
+      setTimeout(() => setError(''), 5000);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -73,7 +85,21 @@ const AddLinkTab = () => {
       
       setTimeout(() => setSuccess(''), 3000);
     } catch (e) {
-      setError(`Save failed: ${e.message}`);
+      let errorMessage = 'Save failed: ';
+      
+      if (e.code === 'ECONNABORTED' || e.message.includes('timeout')) {
+        errorMessage += 'Request timed out. The server might be slow. Please try again.';
+      } else if (e.response?.status === 500) {
+        errorMessage += 'Server error. Please try again later.';
+      } else if (e.response?.status === 400) {
+        errorMessage += 'Invalid data. Please check your input.';
+      } else if (e.message.includes('Network Error')) {
+        errorMessage += 'Network error. Please check your connection.';
+      } else {
+        errorMessage += e.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
